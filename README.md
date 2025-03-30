@@ -1,16 +1,22 @@
-## 25-03-2025:
-### Error Handling:
+# Study Log
+
+## 25-03-2025
+
+### Error Handling
 
 - Method Signature:
-```
+
+```rust
 pub fn method_name() -> Result<String, io::Error> {}
 
 // Java equivalent:
 pubic void methodName() throws IOException {}
 ```
-- To rethrow the Error to the parent method use "?" symbol
+
+- To re throw the Error to the parent method use "?" symbol
 - Error Handling on the source method:
-```
+
+```rust
 match some_operation() {
     Ok() => { // equal to try block in java}
     Err(e) => { // equal to catch block in java}
@@ -25,24 +31,29 @@ try {
 
 ```
 
-- "anyhow" crate enhances the error handling by making the return type less verbose when multiple error types needs to be returned and also it provides a "context" method to add additional context to the error before rethrowing it.
+- "anyhow" crate enhances the error handling by making the return type less
+verbose when multiple error types needs to be returned and also it provides
+a "context" method to add additional context to the error before
+re-throwing it.
 
-- There is one more crate called "thiserror" which is more performance efficient than "anyhow"
+- There is one more crate called "thiserror" which is more performance
+efficient than "anyhow"
 
+## 29-03-2025
 
-## 29-03-2025:
+### Ownership
 
-### Ownership:
-
-In Rust, every value has a single owner a any given time. When the owner goes out of scope the value is dropped. (deallocated automatically)
+In Rust, every value has a single owner a any given time. When the owner
+goes out of scope the value is dropped. (deallocated automatically)
 
 Rules of Ownership:
+
 1. Each value has exactly one owner
 2. When the owner goes out of scope, the value is dropped.
 3. Ownership can be transferred(moved) to another variable.
 
-
 Example-1: Ownership Transfer (moved)
+
 ```rust
 fu main() {
   let s1 = String::new("hello");
@@ -51,12 +62,14 @@ fu main() {
 }
 ```
 
-Explanation: 
+Explanation:
+
 - String is stored in heap, and s1 owns the heap memory.
 - When assigning s1 to s2, ownership moves to s2, and s1 becomes invalid.
 
 Example-2: Cloning (Deep copy)
-```
+
+```rust
 fn main() {
   let s1 = String::new("hello");
   let s2 = s1.clone(); // Creates a deep copy
@@ -64,16 +77,16 @@ fn main() {
 }
 ```
 
+### Borrowing & References
 
-### Borrowing & References:
-
-Instead of transferring the ownership, Rust allows borrowing by using references (&).
+Instead of transferring the ownership, Rust allows borrowing
+by using references (&).
 
 Rules of Borrowing:
+
 1. You can have multiple immutable (&T) references.
 2. You can have only one mutable (&mut T) reference any any time.
 3. References must always be valid.
-
 
 Example-3: immutable borrowing:
 
@@ -93,8 +106,8 @@ fn caluculate_length(s: &String) -> usize {
 - &s is immutable reference: s is not moved and remains usable
 - Immutable references do not allow modification of the borrowed value.
 
-
 Example-4: Mutable borrowing:
+
 ```rust
 fn main() {
   let s = String::from("hello");
@@ -112,6 +125,7 @@ fn change(s: &mut String) {
 - You can have only one mutable reference at a time to prevent data races.
 
 Example-5: Multiple immutable references allowed:
+
 ```rust
 fn main() {
   let s = String::from("hello");
@@ -123,8 +137,8 @@ fn main() {
 }
 ```
 
-
 Example-6: Mutable and immutable references together (Not allowed):
+
 ```rust
 fn main() {
   let s = String::from("hello");
@@ -136,11 +150,13 @@ fn main() {
   println!("{}, {}, {}", r1, r2, r3);
 }
 ```
+
 Explanation:
+
 - if r3 modifies s, r1 and r2 could be invalid, leanding to undefined behaviour.
 
-
 Fixing above example:
+
 ```rust
 fn main() {
   let s = String::from("hello");
@@ -156,14 +172,15 @@ fn main() {
 }
 
 ```
+
 - Immutable references must go out of scope before a mutable reference is created.
 
-
-### Slices: Borrowing parts of the data:
+### Slices: Borrowing parts of the data
 
 - Slices allow borrowing of parts of the data
 
 Example-7: String slices
+
 ```rust
 fn main() {
   let s = String::from("hello, world");
@@ -174,8 +191,8 @@ fn main() {
   println!("{}, {}", hello, world);
 }
 ```
-- &s[string..end] creates a slice reference, which does not own the data.
 
+- `&s[string..end]` creates a slice reference, which does not own the data.
 
 Example-8: Preventing dangling references:
 
@@ -189,6 +206,7 @@ fn dangle() -> &String { // ERROR: returns reference to dropped value
 ```
 
 Fix: Return the owned value instead:
+
 ```rust
 fn no_dangle() -> String {
   let s = String::from("hello");
@@ -196,8 +214,8 @@ fn no_dangle() -> String {
 }
 ```
 
+### Summary
 
-Summary:
 - Ownership: Each value has a owner, and when it goes out of scope, it's dropped.
 - Move: Assigning a value to another variable transfers the Ownership.
 - Clone: Creates a clone copy instead of transferring the ownership.
@@ -206,46 +224,100 @@ Summary:
 - Mutable Borrowing: (&mut T): Only one mutable reference allowed at a time.
 - Slices (&[T] or &str): Allows borrowing parts of the data without ownership transfer.
 
+## 30-03-2025
+
+### Lifetimes
+
+- Lifetimes prevent dangling references and use-after-free errors enforcing strict
+  borrowing at compile time.
+- Lifetimes are annotations that describe how long references are valid.
+
+Example:
+
+```rust
+fn dangling() -> &String {
+  let s = String::from("hello");
+  &s  // ERROR: s goes out of scope here, but its reference is returned
+}
+```
+
+- Lifetime are represented with generic annotations lie `'a` They appear on function
+  signature where references are used.
+
+```rust
+fn longest<'a'>(x: &'a str, y: &'a str) -> &'a str {
+  if x.len() > y.len() { x } else { y }
+}
+```
+
+Here:
+
+- `'a` is a generic lifetime
+- `x` and `y` must have same lifetime `'a`
+- The returned reference must not outlive either `x` or `y`
+
+```rust
+fn main() {
+  let s1 = String::from("long");
+  let s2 = String::from("short");
+
+  let result = longest(s1, s2);
+  println!("result: {}", result);
+}
+```
+
+Elision Rules (Omitting explicit lifetime annotations)
+
+Rust applies Elision rules to simplify function signature
+
+1. Each reference parameter gets its own lifetime.
+2. If there is exactly one reference parameter, its lifetime is assigned to the return type.
+3. If `self` or `&self` is present, the return type uses the lifetime of `self`.
+
+Example: (without explicit lifetimes):
+
+```rust
+fn first_word(s: &str) -> &str {
+  &s[..s.find(' ').unwrap_or(s.len())]
+}
+```
+
+- This is valid because Rust automatically assigns lifetimes.
+
+Structs with Lifetimes:
+
+- when a struct holds reference, it needs explicit lifetimes:
+
+```rust
+struct Book<'a> {
+  title: &'a str,
+}
 
 
+fn main() {
+  let name = String::from("Rust Book");
+  let book = Book { title: &name}; // book cannot outlive name
+}
+```
 
+Without `'a` `Book` might outlive `name`, causing an invalid reference.
 
+Static Lifetimes:
 
+- The `'static` lifetime means the reference lives for the entire program.
 
+```rust
+let s: &'statis str = "Hello, World";
+```
 
+- String literals always have `'static` because they're stored in binary.
 
+Lifetime Subtyping:
 
+```rust
+fn foo<'short, 'long: 'short>(x: &'long str) -> &'short str {
+  x
+}
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Here `'long: 'short` means `'long` outlives `'short`.
