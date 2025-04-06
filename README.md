@@ -271,7 +271,8 @@ Elision Rules (Omitting explicit lifetime annotations)
 Rust applies Elision rules to simplify function signature
 
 1. Each reference parameter gets its own lifetime.
-2. If there is exactly one reference parameter, its lifetime is assigned to the return type.
+2. If there is exactly one reference parameter, its lifetime is assigned to the
+   return type.
 3. If `self` or `&self` is present, the return type uses the lifetime of `self`.
 
 Example: (without explicit lifetimes):
@@ -286,7 +287,7 @@ fn first_word(s: &str) -> &str {
 
 Structs with Lifetimes:
 
-- when a struct holds reference, it needs explicit lifetimes:
+- when a Struct holds reference, it needs explicit lifetimes:
 
 ```rust
 struct Book<'a> {
@@ -321,3 +322,65 @@ fn foo<'short, 'long: 'short>(x: &'long str) -> &'short str {
 ```
 
 - Here `'long: 'short` means `'long` outlives `'short`.
+
+### Traits
+
+1. What is Trait?
+   A Trait defines a set of methods that a type must implement
+   it models capabilities or behaviour, not category or identity.
+
+   ```rust
+   trait Speak {
+     fn speak(&self) -> String;
+   }
+   ```
+
+2. Why `&self` is used in trait methods?
+   It allows immutable access to the instance data,
+   without taking ownership.
+
+   - `&self` -> read-only access
+   - `&mut self` -> mutable access
+   - `self` -> takes ownership
+
+3. Why are Traits and method names often the same?
+   It's a convention for clarity, not a rule.
+   - `trait Greet { fn greet(&self) -> String; }` is idiomatic
+   - Trait = capability-noun, method = verb
+   - They can have different names
+
+4. Can Traits have multiple methods?
+   Yes -- Traits can group related methods under a single capability.
+
+   ```rust
+   trait Drawable {
+     fn draw(&self);
+     fn resize(&self, w: u32, h: u32);
+   }
+   ```
+
+   Use When:
+   - Methods are tightly related.
+   - Represents a single logical behaviour.
+
+5. Isn't `Animal` a category, not a trait?
+   Correct -- `Animal` is a category (noun), not a capability.
+
+   ```rust
+   trait Eat { fn eat(&self); }
+   trait Sleep { fn sleep(&self); }
+   trait Move { fn move(&self); }
+
+   trait Animal: Eat + Sleep + Move {}  // Composed trait
+   ```
+
+6. Is `trait Animal: Eat + Sleep + Move {}` a design/code smell?
+   Not if used as a capability group, not to mimic class inheritance.
+   Use cases:
+   - Semantic clarity(`T: Animal`) means it can eat/sleep/move
+   - Groups reusable behaviour
+   - Cleaner trait bounds in generics
+
+   Avoid:
+   - Forcing it as a base class
+   - Stuffing unrelated methods
