@@ -384,3 +384,82 @@ fn foo<'short, 'long: 'short>(x: &'long str) -> &'short str {
    Avoid:
    - Forcing it as a base class
    - Stuffing unrelated methods
+
+### Generics + Trait Bounds
+
+1. What are generics?
+   Generics allow you to write type agnostic code.
+
+   ```rust
+   fn identity<T>(value: T) -> T {
+     value
+   }
+   ```
+
+2. Adding Trait bounds to Generics
+   you often wants to restrict `T` only types that implement certain traits.
+
+   ```rust
+   fn print_something(T: std::fmt::Display)(item: T) {
+     println!("{}", item);
+   }
+   ```
+
+3. Multiple Trait Bounds
+
+   ```rust
+   fn act<T: Speak + Eat>(thing: T) {
+     thing.speak();
+     thing.eat();
+   }
+   ```
+
+4. `where` clause syntax
+   Same as above, but cleaner for complex bounds:
+
+   ```rust
+   fn act<T>(thing: T)
+   where
+     T: Speak + Eat,
+   {
+     thing.speak();
+     thing.eat();
+   }
+   ```
+
+5. Trait Bounds on Structs
+
+   ```rust
+   struct Wrapper<T: Display> {
+     value: T
+   }
+   ```
+
+   Or with where
+
+   ```rust
+   struct Wrapper<T>
+   where 
+     T: Display
+   {
+     value: T
+   }
+   ```
+
+6. Return type with Trait (`impl Trait`)
+
+   ```rust
+   fn get_speaker() -> impl Speak {
+     Dog {}
+   }
+   ```
+
+7. Generic Trait implementations
+
+   ```rust
+   impl<T: Display> Wrapper<T> {
+     fn print(&self) {
+       println!("{}", self.value);
+     }
+   }
+   ```
