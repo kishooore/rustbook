@@ -1,5 +1,14 @@
 # Study Log
 
+## Rules/Goals to Remember when in Doubt or Stuck
+
+1. Learning only for FUN, not to build something crazy.
+2. Spend 15 mins every day, revise a concept or write a method
+3. Learn different crates
+4. Learn about benchmark testing
+5. Your goal is not to become expert, but to achieve long term consistency
+   and to build muscle memory.
+
 ## 25-03-2025
 
 ### Error Handling
@@ -461,5 +470,66 @@ fn foo<'short, 'long: 'short>(x: &'long str) -> &'short str {
      fn print(&self) {
        println!("{}", self.value);
      }
+   }
+   ```
+
+### Trait Objects
+
+1. What are Trait Objects (`dyn Trait`)?
+   A trait object is a reference to any type that implements a trait,
+   used when the concrete type is not known at compile time.
+
+   Enables dynamic dispatch.
+
+   ```rust
+   fn do_speak(s: &dyn Speak) // Borrowed trait object
+   fn do_speak_owned(s: Box<dyn Speak>) // Owned trait object
+   ```
+
+2. When to use?
+   Use trait objects when:
+   - You need runtime polymorphism
+   - You want to store heterogeneous types in a collection
+   - You don't care about the exact type, only its behaviour
+
+   Avoid when:
+   - Performance is critical -> prefer Generics (static dispatch)
+   - Trait is not object-safe
+
+   Object Safety Rules:
+   A trait can only be used as trait object if:
+   - it does not have method returning `Self`
+   - It does not have generic methods
+
+   OK
+
+   ```rust
+   trait Speak {
+     fn speak(&self);
+   }
+   ```
+
+   NOT OK:
+
+   ```rust
+   trait Build {
+     fn new() -> Self;
+     fn configure<T>(&self);
+   }
+   ```
+
+   Vector of Mixed Types:
+
+   ```rust
+   trait Speak { fn speak(&self); }
+
+   struct Dog; impl Speak for Dog { fn speak(&self) { println!("Bow!"); }}
+   struct Cat; impl Speak for Cat { fn speak(&self) { println!("Meow!"); }}
+
+
+   let animals: Vec<Box<dyn Speak>> = vec![Box::new(Dog), Box::new(Cat)];
+
+   for animal in animals {
+     animal.speak();
    }
    ```
